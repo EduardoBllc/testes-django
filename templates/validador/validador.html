@@ -1,0 +1,57 @@
+{% extends 'base.html' %}
+
+{% block content %}
+    <header class="w-100 d-flex justify-content-center mb-5">
+        Validador
+    </header>
+
+    <main>
+        <div id="selecao">
+            <form method="post" action="{% url 'validador' %}" name="formIngressos" id="formIngressos">
+                {% csrf_token %}
+                    {% for ingresso in ingressos %}
+                            <div class="w-50 d-flex flex-row align-items-center justify-content-around ingresso">
+                                <input class="checkbox-ingresso" type="checkbox" name="ingressos_selecionados" form="formIngressos" value="{{ ingresso.id }}">
+                                <p class="codigo_ingresso">Codigo: {{ ingresso.id }}</p>
+                                <p class="sessao_ingresso">Sessao: {{ ingresso.data_sessao }}</p>
+                            </div>
+                    {% endfor %}
+                <button id="botaoValidar" class="mx-5 mt-2" type="submit">Validar</button>
+            </form>
+        </div>
+
+        <div id="resposta_validacao"></div>
+    </main>
+
+    <script>
+        document.getElementById('formIngressos').addEventListener('submit', async function(event){
+            event.preventDefault();
+
+            const dadosForm = new FormData(this)
+            console.log('Form Data:', dadosForm);
+
+            const resposta = await fetch(this.action, {
+                method: 'POST',
+                body: dadosForm,
+            });
+
+            if(resposta.status === 200) {
+                const dadosResposta = await resposta.json();
+
+                if (dadosResposta['sucesso'] === true) {
+                    document.getElementById('selecao').style.display = 'none';
+                    const elementoResposta = document.getElementById('resposta_validacao');
+
+                    elementoResposta.className = 'd-flex flex-column align-items-center justify-content-center'
+
+                    elementoResposta.innerHTML = `
+                <p>Status: ${dadosResposta['status']}</p>
+                <p>Códigos dos ingressos validados: ${dadosResposta['ingressos_validados'].join(', ')}</p>
+                `;
+                }
+            }else{
+                alert('Erro no sistema, entre em contato com o suporte!')
+            }
+        });
+    </script>
+{% endblock %}
